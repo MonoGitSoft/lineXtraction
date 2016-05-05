@@ -13,17 +13,17 @@ vector<Point> data_generate(line f_line, line s_line, int data_num)
     vector<Point> data;
     line asd(120,30);
     default_random_engine general;
-    normal_distribution<double> gauss_nois(0,0.5);
+    normal_distribution<double> gauss_nois(0,0);
     for(int i = 1; i < data_num; i++)
     {
         temp.x = i;
         temp.y = f_line.value_y(i) + gauss_nois(general);
         data.push_back(temp);
     }
-    for(int i = data_num + 1; i < 2*data_num; i++)
+    for(int i = data_num + 90; i < 2*data_num - 90; i++)
     {
         temp.x = i;
-        temp.y = asd.value_y(i) + gauss_nois(general);
+        temp.y = 400*sin( (double)i / 50) + gauss_nois(general);
         data.push_back(temp);
     }
        for(int i = 2*data_num; i < 3*data_num; i++)
@@ -53,13 +53,13 @@ void osftream_points(string name, vector<Point>& Points) // "name.txt" format
 int main()
 {
 
-    line f_l(60,10);
-    line s_l(-50,20);
+    line f_l(30,10);
+    line s_l(-30,10);
     ofstream f_data;
     ofstream r_data;
     f_data.open("data.txt");
     r_data.open("r_data.txt");
-    std::vector<Point> data = data_generate(f_l,s_l,100);
+    std::vector<Point> data = data_generate(f_l,s_l,200);
     for(int i = 0; i < data.size();i++)
         f_data<<data[i].x<<","<<data[i].y<<endl;
     lineXtracion get_lines(data);

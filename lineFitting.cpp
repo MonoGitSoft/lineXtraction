@@ -39,7 +39,7 @@ float line::residual_error(vector<polar_point> pol_points)
 
     Point p=lastpoint-firstpoint;
 
-    for(int i=1;i<temp_points.size()-1;i++)
+    for(int i=1;i < temp_points.size();i++)
     {
         Point pp=temp_points[i]-firstpoint;
         dist=fabs(pp * p) / p.Norm();
@@ -53,7 +53,7 @@ vector<Point> line::line_graf(float x_1,float x_2)
     vector<Point> temp;
     Point temp_point;
     float x_i = x_1;
-    float res = (x_2 - x_1)/100; // resolusion
+    float res = 1; // resolusion
     while( x_i < x_2 )
     {
         temp_point.x = x_i;

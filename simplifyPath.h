@@ -75,6 +75,7 @@ class simplifyPath{
 //"findMaximumDistance" used as part of implementation for RDP algorithm.
 private:
     const std::pair<int, double> findMaximumDistance(const std::vector<Point>& Points)const;
+    const std::pair<int, double> findMaximumDistance(const vector<Point>& Points,line& at_line)const;
 
 //"simplifyWithRDP" returns the simplified path with a Point vector. The function takes in the paths to be simplified and a customerized thresholds for the simplication.
 public:
