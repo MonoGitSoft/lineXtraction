@@ -11,10 +11,10 @@ vector<Point> data_generate(line f_line, line s_line, int data_num)
 {
     Point temp;
     vector<Point> data;
-    line asd(120,30);
+    line asd(40,30);
     default_random_engine general;
     normal_distribution<double> gauss_nois(0,0);
-    for(int i = 1; i < data_num; i++)
+    for(int i = -data_num; i < 0; i++)
     {
         temp.x = i;
         temp.y = f_line.value_y(i) + gauss_nois(general);
@@ -42,10 +42,10 @@ void ostream_points(iostream  stream, vector<Point>& Points)
 }
 
 
-void osftream_points(string name, vector<Point>& Points) // "name.txt" format
+void osftream_points(const string name, vector<Point>& Points) // "name.txt" format
 {
     ofstream data;
-    data.open(name);
+    data.open("asd.txt");
     for(int i = 0;i < Points.size(); i++)
         data<<Points[i].x<<","<<Points[i].y<<endl;
 }
@@ -53,8 +53,8 @@ void osftream_points(string name, vector<Point>& Points) // "name.txt" format
 int main()
 {
 
-    line f_l(30,10);
-    line s_l(-30,10);
+    line f_l(135,400);
+    line s_l(45,200);
     ofstream f_data;
     ofstream r_data;
     f_data.open("data.txt");
@@ -65,8 +65,19 @@ int main()
     lineXtracion get_lines(data);
     get_lines.Extract();
     vector<Point> result = get_lines.Result_export();
-    for(int i = 0; i < result.size(); i++)
+    for(int i = 0; i < result.size();i++)
         r_data<<result[i].x<<","<<result[i].y<<endl;
+    for(int i = 0; i < get_lines.Fitlines.size();i++)
+        cout<<get_lines.Fitlines[i].alfa<<","<<get_lines.Fitlines[i].r<<endl;
+   /* for(int i = 0; i < result_polar.size(); i++)
+    {
+        if(result_polar[i].alfa < 0)
+            {
+                result_polar[i].alfa = 2*PI + result_polar[i].alfa;
+            }
+        r_data<<result_polar[i].alfa<<","<<result_polar[i].r<<endl;
+    }*/
+
 
    /* line f_l(60,10);
     line s_l(-50,50);
