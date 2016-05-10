@@ -20,13 +20,13 @@ vector<Point> data_generate(line f_line, line s_line, int data_num)
         temp.y = f_line.value_y(i) + gauss_nois(general);
         data.push_back(temp);
     }
-    for(int i = data_num + 90; i < 2*data_num - 90; i++)
+    for(int i = 0; i < data_num ; i++)
     {
         temp.x = i;
-        temp.y = 400*sin( (double)i / 50) + gauss_nois(general);
+        temp.y = 100*sin( (double)i / (data_num/4)) + 250;
         data.push_back(temp);
     }
-       for(int i = 2*data_num; i < 3*data_num; i++)
+       for(int i = data_num; i < 2*data_num; i++)
     {
         temp.x = i;
         temp.y = s_line.value_y(i) + gauss_nois(general);
@@ -52,23 +52,69 @@ void osftream_points(const string name, vector<Point>& Points) // "name.txt" for
 
 int main()
 {
-
-    line f_l(135,400);
-    line s_l(45,200);
+    default_random_engine general;
+    double szoras;
+    szoras = 10;
+    normal_distribution<double> gauss_nois(0,szoras);
+    double sum_p=0;
+    double p=0;
+    double sum_n;
+    double n;
+    double zaj;
+    for(int i = 0;i < 100;i++)
+    {
+        zaj = gauss_nois(general);
+        if( zaj > 0 )
+            {
+                sum_p = sum_p + zaj;
+                p++;
+            }
+        else
+            {
+                sum_n = sum_n + zaj;
+                n++;
+            }
+    }
+    line f_l(135,150);
+    line s_l(60,200);
     ofstream f_data;
     ofstream r_data;
+    ofstream p_data;
     f_data.open("data.txt");
     r_data.open("r_data.txt");
-    std::vector<Point> data = data_generate(f_l,s_l,200);
+    p_data.open("p_data.txt");
+    std::vector<Point> data = data_generate(f_l,s_l,300);
+    vector<polar_point> temp = descart2polar(data);
+    for(int i= 0; i < temp.size();i++)
+    {
+        temp[i].r = (double)temp[i].r + gauss_nois(general);
+        temp[i].weight = 1 / (szoras*szoras);
+        temp[i].variance = szoras;
+    }
+    /*line a = lineFitting(temp);
+    cout<< a.r<<" "<<a.alfa<<endl;
+    cout<<a.residual_error(temp)<<endl;
+    double sum_di = 0;
+    for(int i = 0;i < temp.size();i++)
+        sum_di = sum_di + abs(cos(temp[i].alfa - a.alfa))*4/(sqrt(2*PI));
+    double sum_var;
+    for(int i= 0; i < temp.size();i++)
+        sum_var = sum_var + cos(temp[i].alfa - a.alfa)*cos(temp[i].alfa - a.alfa)*4*((PI - 2)/PI);
+    cout<<sum_di + 1.5*sqrt(sum_var) <<endl;*/
+    data = polar2descart(temp);
     for(int i = 0; i < data.size();i++)
         f_data<<data[i].x<<","<<data[i].y<<endl;
-    lineXtracion get_lines(data);
+    lineXtracion get_lines(temp);
     get_lines.Extract();
-    vector<Point> result = get_lines.Result_export();
+    vector<Point> result =get_lines.fit_points;
     for(int i = 0; i < result.size();i++)
         r_data<<result[i].x<<","<<result[i].y<<endl;
     for(int i = 0; i < get_lines.Fitlines.size();i++)
         cout<<get_lines.Fitlines[i].alfa<<","<<get_lines.Fitlines[i].r<<endl;
+    for(int i = 0 ;i < get_lines.fit_pol_points.size();i++)
+        p_data<<get_lines.fit_pol_points[i].r<<","<<get_lines.fit_pol_points[i].alfa<<endl;
+    get_lines.Export_polar();
+    get_lines.Export_polar_data();
    /* for(int i = 0; i < result_polar.size(); i++)
     {
         if(result_polar[i].alfa < 0)

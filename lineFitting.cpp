@@ -1,4 +1,5 @@
 #include "lineFitting.h"
+#include <fstream>
 
 using namespace std;
 
@@ -23,29 +24,34 @@ float line::value_y(float x)
 
 float line::residual_error(vector<polar_point> pol_points)
 {
-    vector<Point> temp_points;
-    temp_points = polar2descart(pol_points);
-
-    Point firstpoint;
-    Point lastpoint;
-    double dist;
-    double sum_dist;
-
-    firstpoint.x = temp_points[0].x;
-    firstpoint.y = this->value_y(temp_points[0].x);
-
-    lastpoint.x = temp_points[temp_points.size()-1].x;
-    lastpoint.y = this->value_y(temp_points[temp_points.size()-1].x);
-
-    Point p=lastpoint-firstpoint;
-
-    for(int i=1;i < temp_points.size();i++)
+    if(pol_points.size() < 2)
+        return 0;
+    else
     {
-        Point pp=temp_points[i]-firstpoint;
-        dist=fabs(pp * p) / p.Norm();
-        sum_dist = sum_dist + dist;
+        vector<Point> temp_points;
+        temp_points = polar2descart(pol_points);
+
+        Point firstpoint;
+        Point lastpoint;
+        double dist;
+        double sum_dist;
+
+        firstpoint.x = temp_points[0].x;
+        firstpoint.y = this->value_y(temp_points[0].x);
+
+        lastpoint.x = temp_points[temp_points.size()-1].x;
+        lastpoint.y = this->value_y(temp_points[temp_points.size()-1].x);
+
+        Point p=lastpoint-firstpoint;
+
+        for(int i=1;i < temp_points.size();i++)
+        {
+            Point pp=temp_points[i]-firstpoint;
+            dist=fabs(pp * p) / p.Norm();
+            sum_dist = sum_dist + dist;
+        }
+        return sum_dist;
     }
-    return sum_dist;
 }
 
 vector<Point> line::line_graf(float x_1,float x_2)
@@ -70,6 +76,7 @@ polar_point::polar_point()
     alfa = 0;
     r = 0;
     weight = 1;
+    variance = 1;
     in_line = true;
 }
 
@@ -89,7 +96,7 @@ polar_point::polar_point(float alfa, float r, float weight)
     in_line = true;
 }
 
-bool operator==(const polar_point& this_one, const polar_point& other_one)
+bool operator==(const polar_point& this_one, const polar_point& other_one) // find algorithm require operator==
 {
     if( (this_one.alfa == other_one.alfa) && (this_one.r == other_one.r) )
         return true;
@@ -134,37 +141,41 @@ line lineFitting(std::vector<Point>& Points)
     float sum_4 = 0;
     float sum_r = 0;
     polar_data = descart2polar(Points);
-    float sum_var = 1 / (float)polar_data.size();
+    float sum_var;
+    for(int i = 0; i < polar_data.size();i++)
+        sum_var = sum_var + polar_data[i].weight;
+    cout<<(float)Points.size()<<endl;
+    cout<<sum_var<<endl;
 
 
     for(int i= 0; i < polar_data.size();i++)
         for(int j = i + 1; j < polar_data.size(); j++)
-            sum_1 = sum_1 + polar_data[i].r*polar_data[j].r*sin(polar_data[i].alfa +  polar_data[j].alfa);
+            sum_1 = sum_1 + polar_data[i].weight*polar_data[j].weight*polar_data[i].r*polar_data[j].r*sin(polar_data[i].alfa + polar_data[j].alfa);
 
     for(int i = 0;i < polar_data.size();i++)
-        sum_2 = sum_2 + ( 1 - (float)polar_data.size() )*polar_data[i].r*polar_data[i].r*sin(2*polar_data[i].alfa);
+        sum_2 = sum_2 + ( polar_data[i].weight - sum_var)*polar_data[i].r*polar_data[i].r*sin(2*polar_data[i].alfa);
 
 
     for(int i= 0; i < polar_data.size();i++)
         for(int j = i + 1; j < polar_data.size(); j++)
-            sum_3 = sum_3 + polar_data[i].r*polar_data[j].r*cos(polar_data[i].alfa + polar_data[j].alfa);
+            sum_3 = sum_3 + polar_data[i].weight*polar_data[j].weight*polar_data[i].r*polar_data[j].r*cos(polar_data[i].alfa + polar_data[j].alfa);
 
     for(int i = 0;i < polar_data.size();i++)
-        sum_4 = sum_4 + (1 - (float)polar_data.size())*polar_data[i].r*polar_data[i].r*cos(2*polar_data[i].alfa);
+        sum_4 = sum_4 + (polar_data[i].weight - sum_var)*polar_data[i].r*polar_data[i].r*cos(2*polar_data[i].alfa);
 
     float wi = (float)polar_data.size();
 
     alfa = 0.5*atan2( (2/wi)*sum_1 + (1/wi)*sum_2, (2/wi)*sum_3 +(1/wi)*sum_4 );
 
     for(int i = 0;i < polar_data.size();i++)
-        sum_r = sum_r + polar_data[i].r*cos(polar_data[i].alfa - alfa);
+        sum_r = sum_r + polar_data[i].weight*polar_data[i].r*cos(polar_data[i].alfa - alfa);
 
-    line linefit(alfa*180/PI,sum_r*sum_var);
+    line linefit(alfa*180/PI,sum_r/sum_var);
     return linefit;
 }
 
 
-line lineFitting(std::vector<polar_point>& polar_Points)
+line lineFitting(std::vector<polar_point>& polar_data)
 {
 
     float r;
@@ -175,37 +186,36 @@ line lineFitting(std::vector<polar_point>& polar_Points)
     float sum_3 = 0;
     float sum_4 = 0;
     float sum_r = 0;
-    vector<polar_point> polar_data;
-    polar_data = polar_Points;
-    float sum_var = 1 / (float)polar_data.size();
-
+    float wi = 0;
+    for(int i = 0;i < polar_data.size();i++)
+    {
+        wi = wi + polar_data[i].weight;
+    }
     for(int i= 0; i < polar_data.size();i++)
         for(int j = i + 1; j < polar_data.size(); j++)
-            sum_1 = sum_1 + polar_data[i].r*polar_data[j].r*sin(polar_data[i].alfa +  polar_data[j].alfa);
+            sum_1 = sum_1 + polar_data[i].weight*polar_data[j].weight*polar_data[i].r*polar_data[j].r*sin(polar_data[i].alfa +  polar_data[j].alfa);
 
     for(int i = 0;i < polar_data.size();i++)
     {
-        sum_2 = sum_2 + ( 1 - (float)polar_data.size() )*polar_data[i].r*polar_data[i].r*sin(2*polar_data[i].alfa);
+        sum_2 = sum_2 + (polar_data[i].weight - wi)*polar_data[i].weight*polar_data[i].r*polar_data[i].r*sin(2*polar_data[i].alfa);
     }
 
 
     for(int i= 0; i < polar_data.size();i++)
         for(int j = i + 1; j < polar_data.size(); j++)
-            sum_3 = sum_3 + polar_data[i].r*polar_data[j].r*cos(polar_data[i].alfa + polar_data[j].alfa);
+            sum_3 = sum_3 + polar_data[i].weight*polar_data[j].weight*polar_data[i].r*polar_data[j].r*cos(polar_data[i].alfa + polar_data[j].alfa);
 
     for(int i = 0;i < polar_data.size();i++)
     {
-        sum_4 = sum_4 + (1 - (float)polar_data.size() )*polar_data[i].r*polar_data[i].r*cos(2*polar_data[i].alfa);
+        sum_4 = sum_4 + (polar_data[i].weight - wi)*polar_data[i].weight*polar_data[i].r*polar_data[i].r*cos(2*polar_data[i].alfa);
     }
-
-    float wi = (float)polar_data.size();
 
     alfa = 0.5*atan2( (2/wi)*sum_1 + (1/wi)*sum_2, (2/wi)*sum_3 +(1/wi)*sum_4 );
 
     for(int i = 0;i < polar_data.size();i++)
-        sum_r = sum_r + polar_data[i].r*cos(polar_data[i].alfa - alfa);
+        sum_r = sum_r + polar_data[i].weight*polar_data[i].r*cos(polar_data[i].alfa - alfa);
 
-    line linefit(alfa*180/PI,sum_r*sum_var);
+    line linefit(alfa*180/PI,sum_r/wi);
     return linefit;
 }
 
@@ -224,6 +234,12 @@ lineXtracion::lineXtracion(vector<polar_point>& pol_points)
 lineXtracion::lineXtracion(vector<Point>& points)
 {
     this->pol_data = descart2polar(points);
+}
+
+void lineXtracion::Filter(int window)
+{
+    for(int i = 0; i < pol_data.size();i++)
+        pol_data[i].r = (pol_data[i].r + pol_data[i - 1].r)*0.5;
 }
 
 void lineXtracion::Extract(void)
@@ -269,4 +285,34 @@ vector<Point> lineXtracion::Result_export(void)
             j = j + 2;
         }
     return point_result;
+}
+
+void lineXtracion::Export_polar()
+{
+    ofstream output_file;
+    output_file.open("p_data.txt");
+    float t_alfa;
+    for(int i = 0; i < fit_pol_points.size();i++)
+    {
+        if( fit_pol_points[i].alfa < 0)
+            t_alfa = 2*PI + fit_pol_points[i].alfa;
+        else
+            t_alfa = fit_pol_points[i].alfa;
+        output_file<<fit_pol_points[i].r<<","<<t_alfa<<endl;
+    }
+}
+
+void lineXtracion::Export_polar_data(void)
+{
+    ofstream output_file;
+    output_file.open("p_raw_data.txt");
+    float t_alfa;
+    for(int i = 0; i < this->pol_data.size();i++)
+    {
+        if( pol_data[i].alfa < 0)
+            t_alfa = 2*PI + pol_data[i].alfa;
+        else
+            t_alfa = pol_data[i].alfa;
+        output_file<<pol_data[i].r<<","<<t_alfa<<endl;
+    }
 }

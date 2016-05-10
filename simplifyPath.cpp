@@ -59,7 +59,7 @@ const std::pair<int, double> simplifyPath::findMaximumDistance(const vector<Poin
 vector<polar_point> simplifyPath::simplifyWithRDP(vector<polar_point>& polar_Points)
 {
 
-   if(polar_Points.size() < 3)
+   if(polar_Points.size() < 10)
   {  //base case 1
     /*for(int i = 0; i < polar_Points.size();i++)
     { //if the result of the split is a small size points array  ( 3,4 ,5 small)
@@ -71,26 +71,38 @@ vector<polar_point> simplifyPath::simplifyWithRDP(vector<polar_point>& polar_Poi
     temp_vect.push_back(temp);
     return temp_vect;
   }
-    line p_s;
-    p_s = lineFitting(polar_Points);
+    /*line p_s;
+    p_s = lineFitting(polar_Points);*/
+    double sum_di = 0;
+    double sum_var = 0;
+    line split_line;
+    split_line = lineFitting(polar_Points);
 
+    for(int i = 0;i < polar_Points.size();i++)
+        sum_di = sum_di + abs(cos(polar_Points[i].alfa - split_line.alfa))*2*(polar_Points[i].variance)/(sqrt(2*PI));
+
+    for(int i= 0; i < polar_Points.size();i++)
+        sum_var = sum_var + cos(polar_Points[i].alfa - split_line.alfa)*cos(polar_Points[i].alfa - split_line.alfa)*polar_Points[i].variance*polar_Points[i].variance*((PI - 2)/PI);
+    sum_var = sqrt(sum_var);
     vector<Point> temp_point;
     temp_point = polar2descart(polar_Points); // Calculate the index where we want to split
     std::pair<int, double> maxDistance=findMaximumDistance(temp_point);
 
     int index=maxDistance.first;
     vector<polar_point>::iterator it=polar_Points.begin();
-    vector<polar_point> path1(polar_Points.begin(),it+index + 1); //new path l1 from 0 to index
+    vector<polar_point> path1(polar_Points.begin(),it+index); //new path l1 from 0 to index
     vector<polar_point> path2(it+index,polar_Points.end()); // new path l2 from index to last
                 // split if interpretation gets better
-    line p_e;
-    line p_b;
+    /*line p_e;
+    line p_b;*/
 
-    p_e = lineFitting(path1);
-    p_b = lineFitting(path2);
-
-
-    if( p_s.residual_error(polar_Points) > (p_e.residual_error(path1) + p_b.residual_error(path2)))
+/*    vector<Point> polar_Points_t = polar2descart(polar_Points);
+    vector<Point> path1_t = polar2descart(path1);
+    vector<Point> path2_t = polar2descart(path2);
+*/
+    /*p_e = lineFitting(path1);
+    p_b = lineFitting(path2);*/
+    if( split_line.residual_error(polar_Points) > sum_di + 0.5*sum_var || split_line.residual_error(polar_Points) < sum_di - 0.5*sum_var)
     {
     vector<polar_point> r1 =simplifyWithRDP(path1);
     vector<polar_point> r2=simplifyWithRDP(path2);

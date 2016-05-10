@@ -52,6 +52,7 @@ class polar_point
         float alfa;
         float r;
         float weight;
+        float variance;
         bool in_line;
 };
 
